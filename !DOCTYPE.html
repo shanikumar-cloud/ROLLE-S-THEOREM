@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rolle's Theorem Animation</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background:#F0FDF4;
+  color:#164E63;
+}
+
+header {
+  background: linear-gradient(120deg,#164E63,#2DD4BF);
+  color: white;
+  text-align: center;
+  padding: 22px 10px;
+}
+
+header h1 {
+  margin: 0;
+}
+
+.container {
+  max-width: 950px;
+  margin: 20px auto;
+  padding: 15px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px #0001;
+}
+
+.formula {
+  text-align: center;
+  font-size: 21px;
+  font-weight: bold;
+  color:#059669;
+  padding: 12px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap: 18px;
+}
+
+.control label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+input {
+  width: 100%;
+  accent-color:#059669;
+}
+
+canvas {
+  width: 100%;
+  height: 380px;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: white;
+}
+
+button {
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background:#059669;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 5px;
+}
+
+button:hover {
+  background:#059669;
+}
+
+.result {
+  background: #eff6ff;
+  padding: 15px;
+  border-radius: 10px;
+  line-height: 1.8;
+}
+
+.success {
+  color:#059669;
+  font-weight: bold;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color:#059669;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>ROLLE'S THEOREM</h1>
+  <p>Interactive Mathematics Animation</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+  <h2>Mathematical Formula</h2>
+  <div class="formula">
+    f(a) = f(b) ⇒ f'(c) = 0
+  </div>
+  <p>
+    If a function is continuous on [a,b],
+    differentiable on (a,b), and f(a)=f(b),
+    then at least one point c exists where
+    the tangent is horizontal.
+  </p>
+</div>
+
+<div class="card">
+  <h2>Change Function Values</h2>
+
+  <div class="formula">
+    f(x) = y₀ + k(x-a)(b-x)
+  </div>
+
+  <div class="controls">
+
+    <div class="control">
+      <label>Starting Point (a): <span id="av">-4</span></label>
+      <input type="range" id="a" min="-8" max="0" value="-4" step="0.5">
+    </div>
+
+    <div class="control">
+      <label>Ending Point (b): <span id="bv">4</span></label>
+      <input type="range" id="b" min="0" max="8" value="4" step="0.5">
+    </div>
+
+    <div class="control">
+      <label>Curve Height (k): <span id="kv">0.5</span></label>
+      <input type="range" id="k" min="-2" max="2" value="0.5" step="0.1">
+    </div>
+
+    <div class="control">
+      <label>Endpoint Height (y₀): <span id="yv">0</span></label>
+      <input type="range" id="y0" min="-5" max="5" value="0" step="0.5">
+    </div>
+
+  </div>
+
+  <div style="text-align:center;margin-top:18px">
+    <button onclick="toggleAnimation()" id="play">
+      ▶ Play Animation
+    </button>
+    <button onclick="resetValues()">↻ Reset</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Live Graph</h2>
+  <canvas id="graph"></canvas>
+  <p>
+    <span style="color:#2563eb">● Blue:</span> Function Curve
+    &nbsp;
+    <span style="color:#dc2626">● Red:</span> Rolle Point (c)
+    &nbsp;
+    <span style="color:#16a34a">━ Green:</span> Horizontal Tangent
+  </p>
+</div>
+
+<div class="card">
+  <h2>Calculation and Result</h2>
+  <div class="result" id="result"></div>
+</div>
+
+<div class="card">
+  <h2>Conditions of Rolle's Theorem</h2>
+  <p>✓ Continuous on [a,b]</p>
+  <p>✓ Differentiable on (a,b)</p>
+  <p>✓ f(a) = f(b)</p>
+  <p class="success">All three conditions are satisfied!</p>
+</div>
+
+</div>
+
+<footer>
+  Interactive Maths Project | Rolle's Theorem
+</footer>
+
+<script>
+const canvas = document.getElementById("graph");
+const ctx = canvas.getContext("2d");
+
+const controls = ["a","b","k","y0"];
+let playing = false;
+let animationFrame;
+
+function values() {
+  return {
+    a: +document.getElementById("a").value,
+    b: +document.getElementById("b").value,
+    k: +document.getElementById("k").value,
+    y: +document.getElementById("y0").value
+  };
+}
+
+function f(x,v) {
+  return v.y + v.k*(x-v.a)*(v.b-x);
+}
+
+function draw() {
+  const v = values();
+
+  document.getElementById("av").textContent = v.a;
+  document.getElementById("bv").textContent = v.b;
+  document.getElementById("kv").textContent = v.k;
+  document.getElementById("yv").textContent = v.y;
+
+  const rect = canvas.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height;
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = W*dpr;
+  canvas.height = H*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  const xmin = -10, xmax = 10;
+  const ymin = -15, ymax = 15;
+
+  const X = x => (x-xmin)/(xmax-xmin)*W;
+  const Y = y => H-(y-ymin)/(ymax-ymin)*H;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle = "#e5e7eb";
+  ctx.lineWidth = 1;
+
+  for(let x=-10;x<=10;x+=1) {
+    ctx.beginPath();
+    ctx.moveTo(X(x),0);
+    ctx.lineTo(X(x),H);
+    ctx.stroke();
+  }
+
+  for(let y=-15;y<=15;y+=1) {
+    ctx.beginPath();
+    ctx.moveTo(0,Y(y));
+    ctx.lineTo(W,Y(y));
+    ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle="#475569";
+  ctx.lineWidth=1.5;
+
+  ctx.beginPath();
+  ctx.moveTo(X(0),0);
+  ctx.lineTo(X(0),H);
+  ctx.moveTo(0,Y(0));
+  ctx.lineTo(W,Y(0));
+  ctx.stroke();
+
+  ctx.fillStyle="#475569";
+  ctx.font="12px Arial";
+  ctx.fillText("x",W-18,Y(0)-8);
+  ctx.fillText("y",X(0)+8,15);
+
+  // Function curve
+  ctx.strokeStyle="#2563eb";
+  ctx.lineWidth=3;
+  ctx.beginPath();
+
+  for(let i=0;i<=500;i++) {
+    let x=xmin+(xmax-xmin)*i/500;
+    let y=f(x,v);
+
+    if(i===0) ctx.moveTo(X(x),Y(y));
+    else ctx.lineTo(X(x),Y(y));
+  }
+  ctx.stroke();
+
+  // Endpoints and Rolle point
+  const c=(v.a+v.b)/2;
+  const yc=f(c,v);
+
+  function point(x,y,color,label) {
+    ctx.beginPath();
+    ctx.arc(X(x),Y(y),5,0,Math.PI*2);
+    ctx.fillStyle=color;
+    ctx.fill();
+
+    ctx.fillStyle=color;
+    ctx.font="bold 14px Arial";
+    ctx.fillText(label,X(x)+7,Y(y)-10);
+  }
+
+  point(v.a,f(v.a,v),"#16a34a","a");
+  point(v.b,f(v.b,v),"#16a34a","b");
+  point(c,yc,"#dc2626","c");
+
+  // Horizontal tangent at c
+  ctx.strokeStyle="#16a34a";
+  ctx.lineWidth=2;
+  ctx.setLineDash([7,5]);
+
+  ctx.beginPath();
+  ctx.moveTo(X(c-2),Y(yc));
+  ctx.lineTo(X(c+2),Y(yc));
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+
+  // Results
+  document.getElementById("result").innerHTML=`
+    <b>Function:</b> f(x) = ${v.y} + ${v.k}(x - ${v.a})( ${v.b} - x)<br>
+    <b>f(a):</b> ${f(v.a,v).toFixed(3)}<br>
+    <b>f(b):</b> ${f(v.b,v).toFixed(3)}<br>
+    <b>Rolle Point:</b> c = (${v.a} + ${v.b}) / 2 = ${c.toFixed(3)}<br>
+    <b>f(c):</b> ${yc.toFixed(3)}<br>
+    <b>Derivative:</b> f'(x) = ${v.k}(${v.a+v.b} - 2x)<br>
+    <b>f'(c):</b> 0<br>
+    <span class="success">✓ Rolle's Theorem Verified!</span>
+  `;
+}
+
+controls.forEach(id => {
+  document.getElementById(id).addEventListener("input",draw);
+});
+
+function toggleAnimation() {
+  playing=!playing;
+  document.getElementById("play").textContent =
+    playing ? "⏸ Pause Animation" : "▶ Play Animation";
+
+  if(playing) animate();
+}
+
+function animate() {
+  if(!playing) return;
+
+  let k=document.getElementById("k");
+  let current=+k.value+0.025;
+
+  if(current>2) current=-2;
+
+  k.value=current;
+  draw();
+
+  animationFrame=requestAnimationFrame(() => {
+    setTimeout(animate,40);
+  });
+}
+
+function resetValues() {
+  document.getElementById("a").value=-4;
+  document.getElementById("b").value=4;
+  document.getElementById("k").value=0.5;
+  document.getElementById("y0").value=0;
+
+  playing=false;
+  cancelAnimationFrame(animationFrame);
+  document.getElementById("play").textContent="▶ Play Animation";
+  draw();
+}
+
+window.addEventListener("resize",draw);
+draw();
+</script>
+
+</body>
+</html>
